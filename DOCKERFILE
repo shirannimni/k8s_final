@@ -1,0 +1,32 @@
+# Use an official Node.js runtime as a parent image
+FROM node:20-alpine
+
+# Set the working directory in the container
+WORKDIR /usr/src/app
+
+# Install system dependencies and TypeScript
+RUN apk add --no-cache python3 build-base
+
+# Copy package.json and package-lock.json
+COPY package*.json ./
+
+# Install project dependencies
+RUN npm install
+
+# Copy TypeScript configuration
+COPY tsconfig.json ./
+
+# Copy source files
+COPY hello.ts ./
+
+# Install TypeScript globally
+RUN npm install -g typescript
+
+# Compile TypeScript to JavaScript
+RUN tsc
+
+# Expose port (modify as needed)
+EXPOSE 3000
+
+# Command to run the compiled JavaScript
+CMD ["node", "hello.js"]
