@@ -1,0 +1,38 @@
+name: Deploy to Kubernetes
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Start Minikube
+        run: |
+          minikube start --driver=docker
+          
+      - name: Update deployment image
+        run: |
+          sed -i "s|ghcr.io/shirannimni/k8s_final:latest|ghcr.io/${{ github.repository_owner }}/k8s_final:${{ github.sha }}|g" k8s/deployment.yaml
+          
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
+          
+      - name: Wait for deployment
+        run: |
+          kubectl rollout status deployment/hello-world-app
+          
+      - name: Get service info
+        run: |
+          kubectl get services
+          kubectl get pods
